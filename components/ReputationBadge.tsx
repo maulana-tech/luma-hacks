@@ -14,7 +14,7 @@ export default function ReputationBadge({ score, size = "md" }: ReputationBadgeP
   const c = 2 * Math.PI * r;
   const offset = c - (score / 1000) * c;
   const center = s.ring / 2;
-  const color = score >= 800 ? "#00d4aa" : score >= 500 ? "#4ea8f6" : score >= 200 ? "#e8a830" : "#666668";
+  const color = score >= 800 ? "#b7d941" : score >= 500 ? "#4ea8f6" : score >= 200 ? "#e8a830" : "#666668";
 
   return (
     <div className="inline-flex items-center gap-2">
