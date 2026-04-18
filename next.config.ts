@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ["@anthropic-ai/sdk", "node-cron"],
+  serverExternalPackages: ["openai", "node-cron"],
 };
 
 export default nextConfig;
