@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { buildPaymentRequired, verifyPaymentOnChain } from "@/lib/x402-middleware";
+import { buildPaymentRequired, verifyPaymentOnChain, recordSuccessfulTx } from "@/lib/x402-middleware";
 
 const MIN_TIP = 0.01;
 
@@ -9,12 +9,13 @@ export async function POST(req: NextRequest) {
   if (!paymentProof) {
     const body = await req.json().catch(() => ({}));
     const amount = body.amount || "0.01";
+    const recipient = body.recipientAgentId || "0x0000000000000000000000000000000000000000";
 
     return NextResponse.json(
       {
         error: "Payment required",
         "x-payment-required": buildPaymentRequired({
-          agentAddress: body.recipientAgentId || "0x0000000000000000000000000000000000000000",
+          agentAddress: recipient,
           price: Math.max(parseFloat(amount), MIN_TIP).toFixed(2),
           description: "Tip to agent",
         }),
@@ -43,6 +44,8 @@ export async function POST(req: NextRequest) {
     if (!verified) {
       return NextResponse.json({ error: "Payment verification failed" }, { status: 402 });
     }
+
+    recordSuccessfulTx(recipientAgentId, tipAmount.toFixed(2)).catch(console.error);
 
     return NextResponse.json({
       success: true,
