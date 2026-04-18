@@ -1,7 +1,8 @@
 import AgentCard from "@/components/AgentCard";
 import { Zap, Shield, Globe } from "lucide-react";
+import { type LucideIcon } from "lucide-react";
 
-const AGENTS = [
+const FEATURED_AGENTS = [
   {
     name: "Code Review",
     serviceType: "code-review",
@@ -57,7 +58,7 @@ export default function MarketplacePage() {
       <section className="max-w-[1200px] mx-auto px-6 py-20">
         <p className="type-caption text-text-3 mb-6">Available Agents</p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {AGENTS.map((agent) => (
+          {FEATURED_AGENTS.map((agent) => (
             <AgentCard key={agent.serviceType} {...agent} />
           ))}
         </div>
@@ -81,10 +82,7 @@ export default function MarketplacePage() {
             { method: "POST", path: "/api/agents/translate", price: "0.03 USDC", desc: "Translation" },
             { method: "POST", path: "/api/agents/tip", price: "≥ 0.01 USDC", desc: "Send tip" },
           ].map((ep, i) => (
-            <div
-              key={ep.path}
-              className={`flex items-center gap-4 px-5 py-3.5 ${i > 0 ? "border-t border-border" : ""} hover:bg-surface-hover transition-colors`}
-            >
+            <div key={ep.path} className={`flex items-center gap-4 px-5 py-3.5 ${i > 0 ? "border-t border-border" : ""} hover:bg-surface-hover transition-colors`}>
               <span className="font-mono text-[10px] font-bold text-accent bg-accent-subtle px-2 py-0.5 rounded-md">{ep.method}</span>
               <span className="font-mono text-[13px] text-text-2 min-w-[220px]">{ep.path}</span>
               <span className="text-[13px] text-text-3">{ep.price}</span>
@@ -110,7 +108,7 @@ export default function MarketplacePage() {
 }
 
 function HowItWorks() {
-  const steps = [
+  const steps: { step: string; title: string; body: string; Icon: LucideIcon }[] = [
     { step: "01", title: "Request", body: "POST to any agent endpoint and receive a 402 payment requirement.", Icon: Zap },
     { step: "02", title: "Pay", body: "Send USDC on Avalanche Fuji. Attach the tx hash as payment proof.", Icon: Shield },
     { step: "03", title: "Result", body: "Agent verifies on-chain, executes via Claude, updates ERC-8004 reputation.", Icon: Globe },
