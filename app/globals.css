@@ -1,26 +1,119 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: 'Instrument Serif';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('https://fonts.gstatic.com/s/instrumentserif/v3/jizBRFtNsSkaat52iktTWQ4wFXzKwaKk.ttf') format('truetype');
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #0f0f10;
+  --surface: #1b1b1c;
+  --surface-hover: #242425;
+  --surface-muted: #1e1e1f;
+  --border: #2a2a2b;
+  --border-strong: #383839;
+  --text: #fdfdfd;
+  --text-2: #a0a0a2;
+  --text-3: #666668;
+  --accent: #00d4aa;
+  --accent-hover: #00b894;
+  --accent-subtle: #00d4aa1a;
+  --red: #ef4444;
+  --amber: #e8a830;
+  --violet: #9b6dff;
+  --blue: #4ea8f6;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-surface-muted: var(--surface-muted);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-text: var(--text);
+  --color-text-2: var(--text-2);
+  --color-text-3: var(--text-3);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-subtle: var(--accent-subtle);
+  --color-red: var(--red);
+  --color-amber: var(--amber);
+  --color-violet: var(--violet);
+  --color-blue: var(--blue);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "ss01", "cv11";
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+::selection {
+  background: #00d4aa30;
+  color: #fdfdfd;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #2a2a2b transparent;
+}
+
+input, select, textarea, button {
+  font-family: inherit;
+}
+
+.font-editorial {
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-style: italic;
+}
+
+.font-mono {
+  font-family: var(--font-geist-mono), 'SF Mono', monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.type-display {
+  font-size: clamp(36px, 5vw, 56px);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  font-weight: 400;
+}
+
+.type-heading {
+  font-size: 22px;
+  line-height: 1.3;
+  letter-spacing: -0.005em;
+  font-weight: 500;
+}
+
+.type-subheading {
+  font-size: 17px;
+  line-height: 1.4;
+  font-weight: 500;
+}
+
+.type-body {
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.type-body-sm {
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.type-caption {
+  font-size: 11px;
+  line-height: 1.4;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 500;
 }
