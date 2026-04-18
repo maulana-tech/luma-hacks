@@ -5,6 +5,8 @@ import { WagmiProvider } from "wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { avalancheFuji } from "wagmi/chains";
 
+import { SidebarProvider } from "./sidebar-context";
+
 import "@rainbow-me/rainbowkit/styles.css";
 
 const config = getDefaultConfig({
@@ -20,7 +22,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider>{children}</RainbowKitProvider>
+        <RainbowKitProvider>
+          <SidebarProvider>{children}</SidebarProvider>
+        </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>
   );
