@@ -1,11 +1,21 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { useAccount } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { motion } from "framer-motion";
 import SpendRuleForm from "@/components/SpendRuleForm";
 import PaymentHistory from "@/components/PaymentHistory";
-import { Wallet, Activity, Settings, Clock, TrendingUp, Zap, Pause, Play } from "lucide-react";
+import {
+  Settings,
+  Clock,
+  TrendingUp,
+  Pause,
+  Play,
+  ArrowUpRight,
+} from "lucide-react";
+import Link from "next/link";
 
 interface Rule {
   id: string;
@@ -26,32 +36,96 @@ interface Stats {
   allTime: { spent: string; txCount: number };
 }
 
-function SpendGauge({ spent, limit, label }: { spent: string; limit: string; label: string }) {
-  const pct = Math.min((parseFloat(spent) / parseFloat(limit)) * 100, 100);
-  const r = 34;
-  const c = 2 * Math.PI * r;
-  const offset = c - (pct / 100) * c;
-  const color = pct > 80 ? "#ef4444" : pct > 60 ? "#e8a830" : "#00d4aa";
-
-  return (
-    <div className="border border-border bg-surface rounded-xl p-5 flex flex-col items-center">
-      <svg width={80} height={80} className="-rotate-90 mb-2.5">
-        <circle cx={40} cy={40} r={r} stroke="#2a2a2b" strokeWidth={4} fill="none" />
-        <circle cx={40} cy={40} r={r} stroke={color} strokeWidth={4} fill="none" strokeLinecap="round" strokeDasharray={c} strokeDashoffset={offset} style={{ transition: "stroke-dashoffset 0.8s ease" }} />
-      </svg>
-      <span className="font-mono text-[14px] font-semibold" style={{ color }}>{spent}</span>
-      <span className="text-[11px] text-text-3 mt-0.5">of {limit} USDC</span>
-      <span className="type-caption text-text-3 mt-2">{label}</span>
-    </div>
-  );
-}
-
 const TYPE_STYLE: Record<string, string> = {
   subscription: "bg-accent-subtle text-accent",
   tip: "bg-amber/15 text-amber",
   donation: "bg-violet/15 text-violet",
   conditional: "bg-blue/15 text-blue",
 };
+
+const SPRING = { type: "spring" as const, stiffness: 500, damping: 40 };
+
+function StatCard({
+  title,
+  value,
+  subtitle,
+  index,
+}: {
+  title: string;
+  value: string;
+  subtitle: string;
+  index: number;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, delay: index * 0.08, ...SPRING }}
+      className="border border-border bg-surface rounded-xl p-5"
+    >
+      <p className="type-caption text-text-3 mb-2">{title}</p>
+      <p className="font-mono text-[22px] font-semibold text-text">{value}</p>
+      <p className="text-[12px] text-text-3 mt-1">{subtitle}</p>
+    </motion.div>
+  );
+}
+
+function BalanceCard({ stats }: { stats: Stats | null }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, delay: 0 }}
+      className="border border-border bg-surface rounded-xl p-6"
+    >
+      <p className="type-caption text-text-3 mb-3">Spent This Month</p>
+      <p className="font-mono text-[36px] font-semibold text-text leading-none">
+        {stats?.thisMonth?.spent || "0.00"}
+        <span className="text-[14px] text-text-3 ml-2">USDC</span>
+      </p>
+      <div className="mt-4 h-1.5 bg-bg rounded-full overflow-hidden">
+        <div
+          className="h-full bg-accent rounded-full transition-all duration-700"
+          style={{
+            width: `${Math.min(
+              (parseFloat(stats?.thisMonth?.spent || "0") /
+                parseFloat(stats?.thisMonth?.limit || "50")) *
+                100,
+              100
+            )}%`,
+          }}
+        />
+      </div>
+      <p className="text-[12px] text-text-3 mt-2">
+        of {stats?.thisMonth?.limit || "50.00"} USDC limit
+      </p>
+
+      <div className="mt-5 pt-4 border-t border-border space-y-3">
+        <div className="flex justify-between items-center">
+          <span className="text-[13px] text-text-3">Today</span>
+          <span className="font-mono text-[13px] text-text">
+            {stats?.today?.spent || "0.00"}{" "}
+            <span className="text-text-3">/ {stats?.today?.limit || "5.00"}</span>
+          </span>
+        </div>
+        <div className="flex justify-between items-center">
+          <span className="text-[13px] text-text-3">This Week</span>
+          <span className="font-mono text-[13px] text-text">
+            {stats?.thisWeek?.spent || "0.00"}{" "}
+            <span className="text-text-3">/ {stats?.thisWeek?.limit || "20.00"}</span>
+          </span>
+        </div>
+        <div className="flex justify-between items-center">
+          <span className="text-[13px] text-text-3">All Time</span>
+          <span className="font-mono text-[13px] text-text">
+            {stats?.allTime?.spent || "0.00"}{" "}
+            <span className="text-text-3">{stats?.allTime?.txCount || 0} txs</span>
+          </span>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
 
 const TABS = [
   { key: "overview" as const, label: "Overview", icon: TrendingUp },
@@ -61,12 +135,24 @@ const TABS = [
 
 type Tab = "overview" | "rules" | "history";
 
-export default function DashboardPage() {
+function DashboardContent() {
+  const searchParams = useSearchParams();
+  const initialTab = (searchParams.get("tab") as Tab) || "overview";
   const { address, isConnected } = useAccount();
-  const [tab, setTab] = useState<Tab>("overview");
+  const [tab, setTab] = useState<Tab>(initialTab);
   const [rules, setRules] = useState<Rule[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
-  const [transactions, setTransactions] = useState<{ id: string; type: string; recipientAddress: string; amount: string; txHash: string | null; status: string; createdAt: string }[]>([]);
+  const [transactions, setTransactions] = useState<
+    {
+      id: string;
+      type: string;
+      recipientAddress: string;
+      amount: string;
+      txHash: string | null;
+      status: string;
+      createdAt: string;
+    }[]
+  >([]);
   const [isPaused, setIsPaused] = useState(false);
 
   const ownerAddress = address || "";
@@ -84,7 +170,8 @@ export default function DashboardPage() {
         ]);
         if (r.ok) setRules((await r.json()).rules || []);
         if (s.ok) setStats(await s.json());
-        if (hist.ok) setTransactions((await hist.json()).transactions || []);
+        if (hist.ok)
+          setTransactions((await hist.json()).transactions || []);
         if (cfg.ok) {
           const config = await cfg.json();
           setIsPaused(config.isPaused || false);
@@ -99,7 +186,10 @@ export default function DashboardPage() {
     try {
       const res = await fetch("/api/payagent/rules", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-owner-address": ownerAddress },
+        headers: {
+          "Content-Type": "application/json",
+          "x-owner-address": ownerAddress,
+        },
         body: JSON.stringify(rule),
       });
       if (res.ok) {
@@ -107,17 +197,30 @@ export default function DashboardPage() {
         setRules((prev) => [...prev, newRule]);
       }
     } catch {
-      setRules((prev) => [...prev, { ...rule, id: `rule_${Date.now()}`, enabled: true, totalSpentToDate: "0.00" } as Rule]);
+      setRules((prev) => [
+        ...prev,
+        {
+          ...rule,
+          id: `rule_${Date.now()}`,
+          enabled: true,
+          totalSpentToDate: "0.00",
+        } as Rule,
+      ]);
     }
   };
 
   const toggleRule = async (id: string, enabled: boolean) => {
     if (!ownerAddress) return;
-    setRules((prev) => prev.map((r) => (r.id === id ? { ...r, enabled } : r)));
+    setRules((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, enabled } : r))
+    );
     try {
       await fetch("/api/payagent/rules", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", "x-owner-address": ownerAddress },
+        headers: {
+          "Content-Type": "application/json",
+          "x-owner-address": ownerAddress,
+        },
         body: JSON.stringify({ id, enabled }),
       });
     } catch {}
@@ -137,96 +240,212 @@ export default function DashboardPage() {
 
   if (!isConnected) {
     return (
-      <div className="max-w-[1200px] mx-auto px-6 py-20 text-center">
-        <h1 className="type-heading text-text mb-4">Dashboard</h1>
-        <p className="type-body text-text-2 mb-6">Connect your wallet to manage your PayAgent.</p>
+      <div className="py-20 text-center">
+        <h1 className="type-heading text-[24px] text-text mb-4">Dashboard</h1>
+        <p className="type-body text-text-2 mb-6">
+          Connect your wallet to manage your PayAgent.
+        </p>
         <div className="flex justify-center">
-          <ConnectButton />
+          <ConnectButton.Custom>
+            {({ openConnectModal, mounted }) => (
+              <div
+                {...(!mounted && {
+                  "aria-hidden": true,
+                  style: { opacity: 0, pointerEvents: "none", userSelect: "none" },
+                })}
+              >
+                <button
+                  onClick={openConnectModal}
+                  className="h-10 px-6 bg-accent text-bg text-[14px] font-medium hover:bg-accent-hover transition-colors"
+                >
+                  Connect Wallet
+                </button>
+              </div>
+            )}
+          </ConnectButton.Custom>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-[1200px] mx-auto px-6 py-10">
-      <div className="flex items-end justify-between mb-8">
-        <div>
-          <h1 className="type-display text-[36px] mb-1">PayAgent</h1>
-          <p className="font-mono text-[12px] text-text-3">{ownerAddress}</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={togglePause}
-            className={`flex items-center gap-1.5 h-8 px-3 rounded-lg border text-[12px] font-medium transition-colors ${
-              isPaused ? "border-amber/30 bg-amber/10 text-amber" : "border-border bg-surface text-text-2 hover:border-border-strong"
-            }`}
-          >
-            {isPaused ? <Play size={12} /> : <Pause size={12} />}
-            {isPaused ? "Resume" : "Pause"}
-          </button>
-          <div className="flex bg-surface border border-border rounded-lg p-0.5">
-            {TABS.map((t) => {
-              const Icon = t.icon;
-              return (
-                <button
-                  key={t.key}
-                  onClick={() => setTab(t.key)}
-                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-[12px] font-medium transition-colors ${
-                    tab === t.key ? "bg-surface-hover text-text" : "text-text-3 hover:text-text-2"
-                  }`}
-                >
-                  <Icon size={13} strokeWidth={1.5} />
-                  {t.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
+    <div className="space-y-10">
+      <header>
+        <h1 className="type-display text-text">
+          Hello,{" "}
+          <span className="font-editorial">
+            {ownerAddress.slice(0, 6)}…{ownerAddress.slice(-4)}
+          </span>
+          .
+        </h1>
+        <p className="mt-2 type-body text-text-2">
+          Your PayAgent overview.
+        </p>
+      </header>
+
+      <div className="flex items-center gap-3 mb-2">
+        {TABS.map((t) => {
+          const Icon = t.icon;
+          return (
+            <button
+              key={t.key}
+              onClick={() => setTab(t.key)}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13px] font-medium transition-colors ${
+                tab === t.key
+                  ? "bg-accent text-bg"
+                  : "text-text-3 hover:text-text hover:bg-surface-hover"
+              }`}
+            >
+              <Icon size={14} strokeWidth={1.5} />
+              {t.label}
+            </button>
+          );
+        })}
+        <div className="flex-1" />
+        <button
+          onClick={togglePause}
+          className={`flex items-center gap-1.5 h-8 px-3 rounded-lg border text-[12px] font-medium transition-colors ${
+            isPaused
+              ? "border-amber/30 bg-amber/10 text-amber"
+              : "border-border bg-surface text-text-2 hover:border-border-strong"
+          }`}
+        >
+          {isPaused ? <Play size={12} /> : <Pause size={12} />}
+          {isPaused ? "Resume" : "Pause"}
+        </button>
       </div>
 
       {tab === "overview" && (
-        <div>
-          <p className="type-caption text-text-3 mb-4">Spending Limits</p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
-            <SpendGauge spent={stats?.today?.spent || "0.00"} limit={stats?.today?.limit || "5.00"} label="Today" />
-            <SpendGauge spent={stats?.thisWeek?.spent || "0.00"} limit={stats?.thisWeek?.limit || "20.00"} label="This Week" />
-            <SpendGauge spent={stats?.thisMonth?.spent || "0.00"} limit={stats?.thisMonth?.limit || "50.00"} label="This Month" />
-            <div className="border border-border bg-surface rounded-xl p-5 flex flex-col items-center justify-center">
-              <span className="type-caption text-text-3 mb-2">All Time</span>
-              <span className="font-mono text-[20px] font-semibold text-text">{stats?.allTime?.spent || "0.00"}</span>
-              <span className="text-[11px] text-text-3 mt-0.5">{stats?.allTime?.txCount || 0} txs</span>
+        <>
+          <section className="grid gap-6 xl:grid-cols-[2fr_3fr]">
+            <div className="min-w-0">
+              <BalanceCard stats={stats} />
             </div>
-          </div>
-          <p className="type-caption text-text-3 mb-4">Details</p>
-          <div className="grid grid-cols-3 gap-3">
-            <div className="border border-border bg-surface rounded-xl p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <Activity size={14} className="text-text-3" strokeWidth={1.5} />
-                <span className="type-caption text-text-3">Active Rules</span>
+            <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-3">
+              <StatCard
+                title="Active Rules"
+                value={`${rules.filter((r) => r.enabled).length}`}
+                subtitle={`of ${rules.length} total`}
+                index={1}
+              />
+              <StatCard
+                title="Today"
+                value={`${stats?.today?.spent || "0.00"} USDC`}
+                subtitle={`${stats?.today?.txCount || 0} transactions`}
+                index={2}
+              />
+              <StatCard
+                title="All Time"
+                value={`${stats?.allTime?.spent || "0.00"} USDC`}
+                subtitle={`${stats?.allTime?.txCount || 0} transactions`}
+                index={3}
+              />
+            </div>
+          </section>
+
+          <section>
+            <h3 className="type-heading text-text mb-4">Quick actions</h3>
+            <div className="border border-border bg-surface rounded-xl overflow-hidden">
+              <Link
+                href="/dashboard?tab=rules"
+                className="flex items-center justify-between gap-4 border-b border-border px-5 py-4 transition-colors hover:bg-surface-hover"
+              >
+                <div className="min-w-0">
+                  <div className="type-subheading text-text">
+                    Create a <span className="font-editorial">spend rule</span>
+                  </div>
+                  <div className="mt-1 type-body-sm text-text-3">
+                    Set up subscriptions, tips, donations, or conditional payments.
+                  </div>
+                </div>
+                <ArrowUpRight className="h-5 w-5 shrink-0 text-text-3" />
+              </Link>
+              <Link
+                href="/"
+                className="flex items-center justify-between gap-4 border-b border-border px-5 py-4 transition-colors hover:bg-surface-hover"
+              >
+                <div className="min-w-0">
+                  <div className="type-subheading text-text">
+                    Browse the <span className="font-editorial">marketplace</span>
+                  </div>
+                  <div className="mt-1 type-body-sm text-text-3">
+                    Discover AI agents and pay per request via x402.
+                  </div>
+                </div>
+                <ArrowUpRight className="h-5 w-5 shrink-0 text-text-3" />
+              </Link>
+              <button
+                onClick={togglePause}
+                className="flex items-center justify-between gap-4 px-5 py-4 w-full text-left transition-colors hover:bg-surface-hover"
+              >
+                <div className="min-w-0">
+                  <div className="type-subheading text-text">
+                    {isPaused ? "Resume" : "Pause"}{" "}
+                    <span className="font-editorial">PayAgent</span>
+                  </div>
+                  <div className="mt-1 type-body-sm text-text-3">
+                    {isPaused
+                      ? "Resume automatic payment execution."
+                      : "Temporarily stop all scheduled payments."}
+                  </div>
+                </div>
+                {isPaused ? (
+                  <Play className="h-5 w-5 shrink-0 text-amber" />
+                ) : (
+                  <Pause className="h-5 w-5 shrink-0 text-text-3" />
+                )}
+              </button>
+            </div>
+          </section>
+
+          {rules.length > 0 && (
+            <section>
+              <h3 className="type-heading text-text mb-4">Active Rules</h3>
+              <div className="space-y-2">
+                {rules.slice(0, 5).map((rule) => (
+                  <div
+                    key={rule.id}
+                    className={`border border-border bg-surface rounded-xl px-4 py-3 flex items-center justify-between transition-opacity ${
+                      rule.enabled ? "opacity-100" : "opacity-40"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={`px-2 py-0.5 text-[10px] rounded-md font-medium ${
+                          TYPE_STYLE[rule.type] || TYPE_STYLE.conditional
+                        }`}
+                      >
+                        {rule.type}
+                      </span>
+                      <span className="text-[13px] font-medium text-text">
+                        {rule.name}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <span className="font-mono text-[12px] text-text-3">
+                        {rule.amount} USDC
+                      </span>
+                      <button
+                        onClick={() => toggleRule(rule.id, !rule.enabled)}
+                        className={`w-9 h-5 rounded-full relative transition-colors ${
+                          rule.enabled ? "bg-accent/30" : "bg-border"
+                        }`}
+                      >
+                        <span
+                          className={`absolute top-[3px] w-3.5 h-3.5 rounded-full transition-all ${
+                            rule.enabled
+                              ? "left-[18px] bg-accent"
+                              : "left-[3px] bg-text-3"
+                          }`}
+                        />
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <span className="font-mono text-[24px] font-semibold text-accent">{rules.filter((r) => r.enabled).length}</span>
-              <span className="text-[13px] text-text-3"> / {rules.length}</span>
-            </div>
-            <div className="border border-border bg-surface rounded-xl p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <Wallet size={14} className="text-text-3" strokeWidth={1.5} />
-                <span className="type-caption text-text-3">Network</span>
-              </div>
-              <span className="text-[14px] font-medium text-text">Avalanche Fuji</span>
-              <br />
-              <span className="text-[11px] text-text-3 font-mono">Chain ID 43113</span>
-            </div>
-            <div className="border border-border bg-surface rounded-xl p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <Zap size={14} className="text-text-3" strokeWidth={1.5} />
-                <span className="type-caption text-text-3">Token</span>
-              </div>
-              <span className="text-[14px] font-medium text-text">USDC</span>
-              <br />
-              <span className="text-[11px] text-text-3 font-mono">6 decimals</span>
-            </div>
-          </div>
-        </div>
+            </section>
+          )}
+        </>
       )}
 
       {tab === "rules" && (
@@ -235,25 +454,53 @@ export default function DashboardPage() {
             <p className="type-caption text-text-3 mb-4">Spend Rules</p>
             {rules.length === 0 ? (
               <div className="border border-border bg-surface rounded-xl p-10 text-center">
-                <p className="type-body-sm text-text-3">No rules yet. Create one to get started.</p>
+                <p className="type-body-sm text-text-3">
+                  No rules yet. Create one to get started.
+                </p>
               </div>
             ) : (
               <div className="space-y-2">
                 {rules.map((rule) => (
-                  <div key={rule.id} className={`border border-border bg-surface rounded-xl p-4 flex items-center justify-between transition-opacity ${rule.enabled ? "opacity-100" : "opacity-40"}`}>
+                  <div
+                    key={rule.id}
+                    className={`border border-border bg-surface rounded-xl p-4 flex items-center justify-between transition-opacity ${
+                      rule.enabled ? "opacity-100" : "opacity-40"
+                    }`}
+                  >
                     <div className="flex items-center gap-3">
-                      <span className={`px-2 py-0.5 text-[10px] rounded-md font-medium ${TYPE_STYLE[rule.type] || TYPE_STYLE.conditional}`}>{rule.type}</span>
+                      <span
+                        className={`px-2 py-0.5 text-[10px] rounded-md font-medium ${
+                          TYPE_STYLE[rule.type] || TYPE_STYLE.conditional
+                        }`}
+                      >
+                        {rule.type}
+                      </span>
                       <div>
-                        <span className="text-[13px] font-medium text-text">{rule.name}</span>
+                        <span className="text-[13px] font-medium text-text">
+                          {rule.name}
+                        </span>
                         <div className="flex items-center gap-3 text-[11px] text-text-3 mt-0.5 font-mono">
                           <span>{rule.amount} USDC</span>
-                          {rule.scheduleFrequency && <span>{rule.scheduleFrequency}</span>}
+                          {rule.scheduleFrequency && (
+                            <span>{rule.scheduleFrequency}</span>
+                          )}
                           <span>spent {rule.totalSpentToDate}</span>
                         </div>
                       </div>
                     </div>
-                    <button onClick={() => toggleRule(rule.id, !rule.enabled)} className={`w-9 h-5 rounded-full relative transition-colors ${rule.enabled ? "bg-accent/30" : "bg-border"}`}>
-                      <span className={`absolute top-[3px] w-3.5 h-3.5 rounded-full transition-all ${rule.enabled ? "left-[18px] bg-accent" : "left-[3px] bg-text-3"}`} />
+                    <button
+                      onClick={() => toggleRule(rule.id, !rule.enabled)}
+                      className={`w-9 h-5 rounded-full relative transition-colors ${
+                        rule.enabled ? "bg-accent/30" : "bg-border"
+                      }`}
+                    >
+                      <span
+                        className={`absolute top-[3px] w-3.5 h-3.5 rounded-full transition-all ${
+                          rule.enabled
+                            ? "left-[18px] bg-accent"
+                            : "left-[3px] bg-text-3"
+                        }`}
+                      />
                     </button>
                   </div>
                 ))}
@@ -274,5 +521,13 @@ export default function DashboardPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense>
+      <DashboardContent />
+    </Suspense>
   );
 }
