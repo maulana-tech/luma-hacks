@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "npx prisma generate && next build",
     "start": "next start",
+    "env:init": "node scripts/init-env.mjs",
     "lint": "eslint",
     "payagent:scheduler": "npx tsx lib/scheduler.ts",
     "db:generate": "npx prisma generate",
