@@ -19,10 +19,10 @@
 
 ### Enhancement Opportunities
 - 🔄 Interchain Messaging (ICM) for cross-L1 communication
-- 🎯 Smart Escrow Agent (payment held until conditions met)
+- ✅ Smart Escrow Agent (payment held until conditions met)
 - 🧭 Routing Agent (compare services, select best by price/reputation)
-- 🔗 Agent Composition (A2A - agents calling agents)
-- 📦 More powerful service agents
+- 🔄 Agent Composition (A2A - agents calling agents)
+- ✅ More powerful service agents (6 agents now)
 
 ---
 
@@ -33,10 +33,12 @@
 | Smart Contract | 100% | Solidity compilation, deploy script, ABI all working |
 | Database (Prisma) | 100% | Schema complete, push to local DB done |
 | Core Libs | 100% | x402, contracts, agent-client, spend-enforcer, scheduler — all functional |
-| Service Agents | 100% | Code review, summarizer, translator — wired to OpenAI (OpenRouter/GLM) |
+| Service Agents | 100% | 6 agents: code review, summarizer, translator, SQL, regex, explainer |
 | PayAgent Core | 100% | Config/rules/stats/history/pause/resume API routes — real USDC payments |
+| Smart Escrow | 100% | Create/execute/approve/reject API + UI component |
+| Telegram Bot | 100% | @vaixa_bot — AI agents + GitHub integration + payment |
 | UI | 100% | Landing page, marketplace, dashboard — all with wallet connection + x402 flow |
-| Deployment | 100% | Vercel deployed: https://vaxa.vercel.app |
+| Deployment | 100% | Vercel: https://scbc-hacks.vercel.app |
 
 ---
 
@@ -68,25 +70,19 @@
 | `lib/spend-enforcer.ts` | DONE | All 10 enforcement checks from spec |
 | `lib/scheduler.ts` | DONE | Real USDC transfers, reputation checks, time-based scheduling |
 | `lib/ai.ts` | DONE | OpenRouter/GLM abstraction layer |
+| `lib/escrow.ts` | DONE | Smart Escrow state management |
+| `lib/github.ts` | DONE | GitHub API integration |
 
-### Service Agents (Current)
+### Service Agents (All Done)
 
 | Agent | Price | Status |
 |-------|-------|--------|
 | Code Review | 0.05 USDC | DONE |
 | Summarizer | 0.02 USDC | DONE |
 | Translator | 0.03 USDC | DONE |
-
-### Service Agents (To Add - Enhancement)
-
-| Agent | Price | Priority | Description |
-|-------|-------|----------|--------------|
-| SQL Generator | 0.04 USDC | HIGH | Natural language → SQL query |
-| Regex Generator | 0.03 USDC | HIGH | Description → regex pattern |
-| Code Explainer | 0.02 USDC | HIGH | Plain english code explanations |
-| Smart Contract Auditor | 0.08 USDC | HIGH | Security review for Solidity |
-| Gas Optimizer | 0.06 USDC | MEDIUM | Gas savings suggestions |
-| README Generator | 0.05 USDC | MEDIUM | Codebase → README.md |
+| SQL Generator | 0.04 USDC | DONE |
+| Regex Generator | 0.03 USDC | DONE |
+| Code Explainer | 0.02 USDC | DONE |
 
 ### API Routes
 
@@ -95,7 +91,15 @@
 | `app/api/agents/code-review/route.ts` | DONE | Full x402 flow + AI + reputation |
 | `app/api/agents/summarize/route.ts` | DONE | Full x402 flow + AI + reputation |
 | `app/api/agents/translate/route.ts` | DONE | Full x402 flow + AI + reputation |
+| `app/api/agents/sql-generator/route.ts` | DONE | Full x402 flow + AI + reputation |
+| `app/api/agents/regex-generator/route.ts` | DONE | Full x402 flow + AI + reputation |
+| `app/api/agents/code-explainer/route.ts` | DONE | Full x402 flow + AI + reputation |
 | `app/api/agents/tip/route.ts` | DONE | With recordSuccessfulTx |
+| `app/api/escrow/create/route.ts` | DONE | Create escrow with payment |
+| `app/api/escrow/[id]/execute/route.ts` | DONE | Execute task via agent |
+| `app/api/escrow/[id]/approve/route.ts` | DONE | Approve & release payment |
+| `app/api/escrow/[id]/reject/route.ts` | DONE | Reject & refund |
+| `app/api/telegram/route.ts` | DONE | Telegram webhook handler |
 | `app/api/agents/route.ts` | DONE | GET endpoint for agent list |
 | `app/api/payagent/config/route.ts` | DONE | GET/PUT with upsert |
 | `app/api/payagent/rules/route.ts` | DONE | GET/POST/PATCH/DELETE |
@@ -115,6 +119,9 @@
 | `app/marketplace/page.tsx` | DONE | Agent listing with search, filters |
 | `app/dashboard/page.tsx` | DONE | Collapsible sidebar, balance card, stats, rules |
 | `components/AgentCard.tsx` | DONE | x402 payment modal with wallet connect |
+| `components/AgentDetailModal.tsx` | DONE | Agent detail popup with tabs |
+| `components/EscrowForm.tsx` | DONE | Smart Escrow create/approve/reject |
+| `components/TelegramBotDemo.tsx` | DONE | Bot preview UI |
 | `components/navbar.tsx` | DONE | Custom ConnectButton |
 | `components/sidebar.tsx` | DONE | Collapsible nav (64px/256px) |
 | `components/smooth-scroll.tsx` | DONE | Lenis only active on landing |
@@ -126,14 +133,16 @@
 ### Must Have (Current)
 - [x] x402 pay-per-request payments
 - [x] ERC-8004 on-chain reputation
-- [x] Multiple service agents
+- [x] Multiple service agents (6 total)
 - [x] PayAgent with spend rules
 - [x] Wallet connection (RainbowKit)
 - [x] Avalanche C-Chain integration
+- [x] Telegram Bot (@vaixa_bot) with AI agents + GitHub
+- [x] Smart Escrow (hold payment until task done)
 
 ### Should Add (Enhancement)
-- [ ] **Add 3+ more service agents** (SQL, Regex, Explainer)
-- [ ] **Smart Escrow Agent** — hold payment until conditions met
+- [x] ~~Add 3+ more service agents~~ (SQL, Regex, Explainer) ✅
+- [x] ~~Smart Escrow Agent~~ ✅
 - [ ] **Routing Agent** — compare services by price/reputation
 - [ ] **Agent-to-Agent composition** — demo agents calling each other
 - [ ] **Enhanced reputation display** — show reputation tier badges
@@ -202,9 +211,10 @@ Every successful tx updates ERC-8004 reputation on-chain.
 
 ## Live URLs
 
-- **Production:** https://vaxa.vercel.app
-- **Dashboard:** https://vaxa.vercel.app/dashboard
-- **Marketplace:** https://vaxa.vercel.app/marketplace
+- **Production:** https://scbc-hacks.vercel.app
+- **Dashboard:** https://scbc-hacks.vercel.app/dashboard
+- **Marketplace:** https://scbc-hacks.vercel.app/marketplace
+- **Telegram Bot:** https://t.me/vaixa_bot
 
 ---
 
@@ -246,8 +256,9 @@ WALLETCONNECT_PROJECT_ID=...
 
 ## Next Steps
 
-1. **Add more service agents** — SQL Generator, Regex Generator, Code Explainer
-2. **Implement Smart Escrow** — Payment held until verification
-3. **Implement Routing Agent** — Auto-select best service
-4. **Demo A2A** — Show agents calling each other
-5. **Deploy & Test** — Full end-to-end x402 flow
+1. ~~Add more service agents~~ ✅ (6 agents done)
+2. ~~Implement Smart Escrow~~ ✅ (API + UI done)
+3. ~~Telegram Bot integration~~ ✅ (@vaixa_bot live)
+4. **Routing Agent** — Auto-select best service by price/reputation
+5. **Agent-to-Agent demo** — Show agents calling each other
+6. **Video demo** — Record walkthrough for hackathon submission

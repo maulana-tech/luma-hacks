@@ -261,14 +261,20 @@ export default function LandingPage() {
             </motion.div>
           </div>
 
-          <div className="flex items-center gap-6 mt-10">
+          <div className="flex items-center gap-4 mt-10">
             <div className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-accent" />
-              <span className="type-caption text-text-3">6 agents live</span>
+              <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+              <span className="type-caption text-text-2">6 AI Agents</span>
             </div>
-            <span className="type-caption text-text-3">
-              Fuji Testnet · 43113
-            </span>
+            <span className="text-border">|</span>
+            <a href="https://t.me/vaixa_bot" target="_blank" className="flex items-center gap-2 text-text-2 hover:text-accent transition-colors">
+              <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor">
+                <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248l-1.97 8.29a1 1 0 01-.828.828l-8.29-1.97a1 1 0 01-.234-.656l.234-2.3 6.1-3.9-1.2-3.9-3.9 1.2 3.9-6.1L3.9 4.7a1.002 1.002 0 01.528-1.656l2.3-.234 1.97 8.29a1.002 1.002 0 01-.828.828z"/>
+              </svg>
+              Telegram Bot
+            </a>
+            <span className="text-border">|</span>
+            <span className="type-caption text-text-3 font-mono">Avalanche Fuji · 43113</span>
           </div>
         </div>
       </section>
@@ -810,43 +816,46 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── CTA ── */}
+{/* ── CTA ── */}
       <section className="bg-surface-muted border-t border-border">
         <div className="max-w-[1200px] mx-auto px-6 py-24 text-center">
           <h2 className="text-[clamp(32px,5vw,48px)] font-bold tracking-[-1.5px] text-text mb-3">
             Start building today
           </h2>
-          <p className="text-[16px] text-text-2 mb-12">
-            Build your own agent products, on your terms, without layers in
-            between.
+          <p className="text-[16px] text-text-2 mb-12 max-w-[500px] mx-auto">
+            Programmable money meets autonomous AI agents. Build, deploy, and earn with x402 payments.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-[800px] mx-auto">
             {[
               {
-                icon: "📄",
-                title: "Documentation",
-                desc: "Explore our APIs",
-                href: "#endpoints",
-              },
-              {
-                icon: "→",
-                title: "Dashboard",
-                desc: "Manage your PayAgent",
-                href: "/dashboard",
-              },
-              {
-                icon: "💬",
+                icon: "📦",
                 title: "Marketplace",
-                desc: "Browse agents",
-                href: "#",
+                desc: "Browse & use AI agents",
+                href: "/marketplace",
+                color: "bg-accent-subtle border-accent text-accent",
+              },
+              {
+                icon: "🤖",
+                title: "Telegram Bot",
+                desc: "Use agents on chat",
+                href: "https://t.me/vaixa_bot",
+                color: "bg-blue-500/10 border-blue-400 text-blue-400",
+              },
+              {
+                icon: "⚡",
+                title: "Smart Escrow",
+                desc: "Hold payment until done",
+                href: "/dashboard",
+                color: "bg-amber/10 border-amber text-amber",
               },
             ].map((card) => (
               <Link
                 key={card.title}
                 href={card.href}
-                className="bg-surface border border-border rounded-none p-8 text-left hover:shadow-lg hover:shadow-black/10 transition-shadow"
+                target={card.href.startsWith("http") ? "_blank" : undefined}
+                className="bg-surface border border-border p-8 text-left hover:border-border-strong hover:translate-y-[-2px] transition-all"
               >
-                <div className="w-12 h-12 border-2 border-dashed border-accent rounded-none flex items-center justify-center text-[20px] mb-5 text-accent">
+                <div className={`w-12 h-12 border-2 rounded-none flex items-center justify-center text-[20px] mb-5 ${card.color}`}>
                   {card.icon}
                 </div>
                 <h4 className="text-[16px] font-semibold text-text mb-1">
@@ -923,6 +932,7 @@ export default function LandingPage() {
                     "Smart Contract",
                     "Fuji Faucet",
                     "GitHub",
+                    "Telegram Bot",
                   ].map((l) => (
                     <li key={l}>
                       <span className="text-[14px] text-text-3 hover:text-text cursor-pointer transition-colors">
