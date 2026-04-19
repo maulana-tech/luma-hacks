@@ -18,20 +18,43 @@ export interface PaymentRequirement {
   recipient: string;
   description: string;
   expiresAt: number;
+  // Optional: if set, clients can pay via the processor (approve + pay) to emit a receipt event.
+  paymentProcessor?: string;
+  // Deterministic request id (can be used in PaymentProcessor receipts)
+  requestId?: string;
 }
 
 export function buildPaymentRequired(options: X402Options): PaymentRequirement {
+  const chainId = Number(process.env.AVALANCHE_CHAIN_ID || 43113);
+  const network =
+    process.env.X402_NETWORK || (chainId === 43113 ? "avalanche-fuji" : "local");
+
+  const expiresAt = Math.floor(Date.now() / 1000) + 600;
+  const tokenAddress =
+    process.env.USDC_CONTRACT_ADDRESS || "0x5425890C6C9Fc8561a8b4E763b7E6e43b7e9A5F4";
+  const amount = ethers.parseUnits(options.price, 6).toString();
+
+  // Deterministic id so the server can recompute without storing session state.
+  const requestId = ethers.solidityPackedKeccak256(
+    ["address", "address", "uint256", "uint256"],
+    [options.agentAddress, tokenAddress, amount, expiresAt]
+  );
+
+  const paymentProcessor = process.env.PAYMENT_PROCESSOR_CONTRACT;
+
   return {
     version: "1.0",
-    network: "avalanche-fuji",
-    chainId: 43113,
+    network,
+    chainId,
     token: "USDC",
-    tokenAddress: process.env.USDC_CONTRACT_ADDRESS || "0x5425890C6C9Fc8561a8b4E763b7E6e43b7e9A5F4",
-    amount: ethers.parseUnits(options.price, 6).toString(),
+    tokenAddress,
+    amount,
     decimals: 6,
     recipient: options.agentAddress,
     description: options.description,
-    expiresAt: Math.floor(Date.now() / 1000) + 600,
+    expiresAt,
+    ...(paymentProcessor ? { paymentProcessor } : {}),
+    requestId,
   };
 }
 

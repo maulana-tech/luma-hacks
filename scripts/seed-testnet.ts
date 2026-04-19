@@ -21,6 +21,9 @@ async function main() {
   console.log(`Using contract at: ${contractAddress}`);
   console.log(`Wallet: ${wallet.address}\n`);
 
+  // Use pending nonce to avoid collisions with previously broadcast txs.
+  let nonce = await provider.getTransactionCount(wallet.address, "pending");
+
   const agents = [
     {
       name: "CodeReviewAgent",
@@ -45,13 +48,50 @@ async function main() {
   for (const agent of agents) {
     try {
       console.log(`Registering ${agent.name}...`);
-      const tx = await contract.registerAgent(agent.name, agent.serviceType, agent.metadataURI);
-      await tx.wait();
+
+      const target = agent.address;
+      if (target.toLowerCase() === wallet.address.toLowerCase()) {
+        const tx = await contract.registerAgent(agent.name, agent.serviceType, agent.metadataURI, {
+          nonce: nonce++,
+        });
+        await tx.wait();
+      } else {
+        try {
+          const tx = await contract.registerAgentFor(
+            target,
+            agent.name,
+            agent.serviceType,
+            agent.metadataURI,
+            { nonce: nonce++ }
+          );
+          await tx.wait();
+        } catch (error: unknown) {
+          // If a previous run broadcasted the same signed tx, Anvil can reply "transaction already imported".
+          // Try to resolve by waiting for it; if it never mines, restarting Anvil is the simplest fix.
+          const msg = error instanceof Error ? error.message : String(error);
+          if (msg.includes("transaction already imported")) {
+            // @ts-expect-error - best-effort extraction across providers
+            const raw = (error?.payload?.params?.[0] || error?.payload?.params?.[0]?.[0]) as
+              | string
+              | undefined;
+            if (typeof raw === "string" && raw.startsWith("0x")) {
+              const txHash = ethers.keccak256(raw as `0x${string}`);
+              await provider.waitForTransaction(txHash, 1, 30_000).catch(() => null);
+            }
+          }
+          throw error;
+        }
+      }
+
       console.log(`  ✓ ${agent.name} registered (${agent.address})`);
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : String(error);
       if (msg.includes("Already registered")) {
         console.log(`  → ${agent.name} already registered, skipping`);
+      } else if (msg.includes("transaction already imported")) {
+        console.error(
+          `  ✗ Failed to register ${agent.name}: tx already in mempool. If this is Anvil, restart anvil then re-run seed.`
+        );
       } else {
         console.error(`  ✗ Failed to register ${agent.name}:`, msg);
       }

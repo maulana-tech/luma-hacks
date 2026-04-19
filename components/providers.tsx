@@ -3,16 +3,21 @@
 import { getDefaultConfig, RainbowKitProvider } from "@rainbow-me/rainbowkit";
 import { WagmiProvider } from "wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { avalancheFuji } from "wagmi/chains";
+import { avalancheFuji, hardhat } from "wagmi/chains";
 
 import { SidebarProvider } from "./sidebar-context";
 
 import "@rainbow-me/rainbowkit/styles.css";
 
+const enableLocal =
+  process.env.NEXT_PUBLIC_ENABLE_LOCAL_CHAIN === "true" ||
+  process.env.NODE_ENV !== "production";
+
 const config = getDefaultConfig({
   appName: "Vaxa",
   projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "demo",
-  chains: [avalancheFuji],
+  // In dev, include local Anvil/Hardhat network (chainId 31337) for easy testing.
+  chains: enableLocal ? [hardhat, avalancheFuji] : [avalancheFuji],
   ssr: true,
 });
 

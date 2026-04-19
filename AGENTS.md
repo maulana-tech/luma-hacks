@@ -670,47 +670,14 @@ agentmarket/
 ## 10. Environment Variables
 
 ```bash
-# .env.local
-
-# Avalanche
-AVALANCHE_RPC_URL=https://api.avax-test.network/ext/bc/C/rpc
-AVALANCHE_CHAIN_ID=43113
-AGENT_REGISTRY_CONTRACT=0x...         # Diisi setelah deploy
-
-# Wallet (JANGAN commit ke git)
-PAY_AGENT_PRIVATE_KEY=0x...           # Hot wallet PayAgent
-DEPLOYER_PRIVATE_KEY=0x...            # Wallet deploy contracts
-
-# USDC Testnet (Fuji)
-USDC_CONTRACT_ADDRESS=0x5425890C6C9Fc8561a8b4E763b7E6e43b7e9A5F4
-
-# AI
-ANTHROPIC_API_KEY=sk-ant-...
-
-# App
-NEXTAUTH_SECRET=...
-DATABASE_URL=postgresql://...         # Untuk store SpendRules & history
-```
-
----
-
-## 11. Cara Menjalankan Lokal
-
-```bash
-# 1. Install dependencies
+# Install dependencies
 npm install
 
-# 2. Copy env template
-cp .env.example .env.local
-# → isi semua variabel di atas
+# Copy environment template (create .env.local from .env.example if exists)
+# Required vars: AVALANCHE_RPC_URL, AGENT_REGISTRY_CONTRACT, PAY_AGENT_PRIVATE_KEY, 
+# DEPLOYER_PRIVATE_KEY, USDC_CONTRACT_ADDRESS, ANTHROPIC_API_KEY, DATABASE_URL
 
-# 3. Deploy smart contracts ke Fuji testnet
-npx ts-node scripts/deploy-contracts.ts
-
-# 4. Seed agents ke registry
-npx ts-node scripts/seed-testnet.ts
-
-# 5. Jalankan app
+# Start development server
 npm run dev
 
 # 6. (Opsional) Jalankan PayAgent scheduler terpisah

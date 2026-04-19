@@ -2,6 +2,9 @@
 pragma solidity ^0.8.20;
 
 contract AgentRegistry {
+    address public owner;
+    mapping(address => bool) public isUpdater;
+
     struct AgentProfile {
         address owner;
         string name;
@@ -21,10 +24,41 @@ contract AgentRegistry {
     event AgentRegistered(address indexed agentAddress, string name, string serviceType);
     event ReputationUpdated(address indexed agentAddress, uint256 newScore, uint256 txCount);
     event AgentDeactivated(address indexed agentAddress);
+    event UpdaterSet(address indexed updater, bool allowed);
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "ONLY_OWNER");
+        _;
+    }
+
+    modifier onlyUpdater() {
+        require(isUpdater[msg.sender], "ONLY_UPDATER");
+        _;
+    }
 
     modifier onlyRegistered() {
         require(agents[msg.sender].isActive, "Not registered or inactive");
         _;
+    }
+
+    constructor() {
+        owner = msg.sender;
+        isUpdater[msg.sender] = true;
+        emit OwnershipTransferred(address(0), msg.sender);
+        emit UpdaterSet(msg.sender, true);
+    }
+
+    function transferOwnership(address newOwner) external onlyOwner {
+        require(newOwner != address(0), "ZERO_ADDRESS");
+        emit OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+    }
+
+    function setUpdater(address updater, bool allowed) external onlyOwner {
+        require(updater != address(0), "ZERO_ADDRESS");
+        isUpdater[updater] = allowed;
+        emit UpdaterSet(updater, allowed);
     }
 
     function registerAgent(
@@ -32,12 +66,32 @@ contract AgentRegistry {
         string calldata serviceType,
         string calldata metadataURI
     ) external {
-        require(bytes(agents[msg.sender].name).length == 0, "Already registered");
+        _registerAgent(msg.sender, name, serviceType, metadataURI);
+    }
+
+    /// @notice Admin registration for external agent addresses (useful for seeding).
+    function registerAgentFor(
+        address agentAddress,
+        string calldata name,
+        string calldata serviceType,
+        string calldata metadataURI
+    ) external onlyOwner {
+        _registerAgent(agentAddress, name, serviceType, metadataURI);
+    }
+
+    function _registerAgent(
+        address agentAddress,
+        string calldata name,
+        string calldata serviceType,
+        string calldata metadataURI
+    ) internal {
+        require(agentAddress != address(0), "ZERO_ADDRESS");
+        require(bytes(agents[agentAddress].name).length == 0, "Already registered");
         require(bytes(name).length > 0, "Name required");
         require(bytes(serviceType).length > 0, "Service type required");
 
-        agents[msg.sender] = AgentProfile({
-            owner: msg.sender,
+        agents[agentAddress] = AgentProfile({
+            owner: agentAddress,
             name: name,
             serviceType: serviceType,
             metadataURI: metadataURI,
@@ -48,16 +102,16 @@ contract AgentRegistry {
             registeredAt: block.timestamp
         });
 
-        agentList.push(msg.sender);
-        agentsByType[serviceType].push(msg.sender);
+        agentList.push(agentAddress);
+        agentsByType[serviceType].push(agentAddress);
 
-        emit AgentRegistered(msg.sender, name, serviceType);
+        emit AgentRegistered(agentAddress, name, serviceType);
     }
 
     function recordSuccessfulTx(
         address agentAddress,
         uint256 amountUSDC
-    ) external {
+    ) external onlyUpdater {
         AgentProfile storage agent = agents[agentAddress];
         require(agent.isActive, "Agent not active");
 
