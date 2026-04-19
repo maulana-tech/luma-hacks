@@ -10,7 +10,7 @@ import { SidebarProvider } from "./sidebar-context";
 import "@rainbow-me/rainbowkit/styles.css";
 
 const config = getDefaultConfig({
-  appName: "AgentMarket",
+  appName: "Vaxa",
   projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "demo",
   chains: [avalancheFuji],
   ssr: true,
