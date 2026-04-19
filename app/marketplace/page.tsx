@@ -14,8 +14,23 @@ import {
   Regex,
   Lightbulb,
 } from "lucide-react";
+import AgentDetailModal from "@/components/AgentDetailModal";
 
-const AGENTS = [
+interface AgentData {
+  id: string;
+  name: string;
+  serviceType: string;
+  icon: React.ComponentType<{ size?: number; className?: string; strokeWidth?: number }>;
+  price: string;
+  reputationScore: number;
+  totalTxCount: number;
+  address: string;
+  description: string;
+  category: string;
+  features: string[];
+}
+
+const AGENTS: AgentData[] = [
   {
     id: "code-review",
     name: "Code Review",
@@ -133,6 +148,7 @@ function ReputationBar({ score }: { score: number }) {
 export default function MarketplacePage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
+  const [selectedAgent, setSelectedAgent] = useState<AgentData | null>(null);
 
   const filteredAgents = AGENTS.filter((agent) => {
     const matchesSearch =
@@ -267,7 +283,10 @@ export default function MarketplacePage() {
                     <ReputationBar score={agent.reputationScore} />
                   </div>
 
-                  <button className="w-full h-10 bg-accent text-bg text-[13px] font-medium hover:bg-accent-hover transition-colors group-hover:translate-y-[-1px]">
+                  <button 
+                    onClick={() => setSelectedAgent(agent)}
+                    className="w-full h-10 bg-accent text-bg text-[13px] font-medium hover:bg-accent-hover transition-colors group-hover:translate-y-[-1px]"
+                  >
                     Use Agent
                   </button>
                 </div>
@@ -338,6 +357,16 @@ export default function MarketplacePage() {
           </div>
         </div>
       </section>
+
+      <AgentDetailModal 
+        agent={selectedAgent}
+        isOpen={!!selectedAgent}
+        onClose={() => setSelectedAgent(null)}
+        onTryAgent={(agent) => {
+          console.log("Try agent:", agent);
+          setSelectedAgent(null);
+        }}
+      />
     </div>
   );
 }
