@@ -14,7 +14,7 @@ export default function Navbar() {
           <span className="text-[15px] font-semibold tracking-tight">Vaxa</span>
         </Link>
         <nav className="flex items-center gap-5">
-          <Link href="/" className="type-caption text-text-3 hover:text-text transition-colors">
+          <Link href="/marketplace" className="type-caption text-text-3 hover:text-text transition-colors">
             Marketplace
           </Link>
           <Link
