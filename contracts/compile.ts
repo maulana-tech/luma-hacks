@@ -2,17 +2,32 @@ const solc = require("solc");
 const fs = require("fs");
 const path = require("path");
 
-const CONTRACT_PATH = path.join(__dirname, "AgentRegistry.sol");
-const ABI_OUT = path.join(__dirname, "abis", "AgentRegistry.json");
-const ARTIFACT_OUT = path.join(__dirname, "AgentRegistry.json");
+const CONTRACTS_DIR = __dirname;
+const ABI_DIR = path.join(CONTRACTS_DIR, "abis");
 
-const source = fs.readFileSync(CONTRACT_PATH, "utf8");
+if (!fs.existsSync(ABI_DIR)) {
+  fs.mkdirSync(ABI_DIR, { recursive: true });
+}
+
+const solFiles = fs
+  .readdirSync(CONTRACTS_DIR)
+  .filter((f) => f.endsWith(".sol"))
+  .sort();
+
+if (solFiles.length === 0) {
+  console.error("No .sol files found in contracts/");
+  process.exit(1);
+}
+
+const sources = {};
+for (const file of solFiles) {
+  const full = path.join(CONTRACTS_DIR, file);
+  sources[file] = { content: fs.readFileSync(full, "utf8") };
+}
 
 const input = {
   language: "Solidity",
-  sources: {
-    "AgentRegistry.sol": { content: source },
-  },
+  sources,
   settings: {
     outputSelection: {
       "*": {
@@ -23,7 +38,7 @@ const input = {
   },
 };
 
-console.log("Compiling AgentRegistry.sol...");
+console.log(`Compiling: ${solFiles.join(", ")}`);
 
 const output = JSON.parse(solc.compile(JSON.stringify(input)));
 
@@ -38,22 +53,35 @@ if (output.errors) {
   }
 }
 
-const contract = output.contracts["AgentRegistry.sol"]["AgentRegistry"];
-if (!contract) {
-  console.error("Contract not found in output");
-  process.exit(1);
+const compiled = output.contracts || {};
+
+let written = 0;
+
+for (const sourceName of Object.keys(compiled)) {
+  const sourceContracts = compiled[sourceName] || {};
+  for (const contractName of Object.keys(sourceContracts)) {
+    const contract = sourceContracts[contractName];
+    if (!contract?.abi || !contract?.evm?.bytecode?.object) continue;
+
+    const abi = contract.abi;
+    const bytecode = contract.evm.bytecode.object;
+
+    const abiOut = path.join(ABI_DIR, `${contractName}.json`);
+    const artifactOut = path.join(CONTRACTS_DIR, `${contractName}.json`);
+
+    fs.writeFileSync(abiOut, JSON.stringify(abi, null, 2));
+    fs.writeFileSync(artifactOut, JSON.stringify({ abi, bytecode }, null, 2));
+
+    console.log(`- ${contractName}: ABI ${abi.length} entries, bytecode ${bytecode.length} chars`);
+    console.log(`  ABI: ${path.relative(process.cwd(), abiOut)}`);
+    console.log(`  Artifact: ${path.relative(process.cwd(), artifactOut)}`);
+    written += 1;
+  }
 }
 
-const abi = contract.abi;
-const bytecode = contract.evm.bytecode.object;
-
-console.log(`ABI: ${abi.length} entries`);
-console.log(`Bytecode: ${bytecode.length} characters`);
-
-fs.writeFileSync(ABI_OUT, JSON.stringify(abi, null, 2));
-console.log(`ABI saved to ${ABI_OUT}`);
-
-fs.writeFileSync(ARTIFACT_OUT, JSON.stringify({ abi, bytecode }, null, 2));
-console.log(`Artifact saved to ${ARTIFACT_OUT}`);
+if (written === 0) {
+  console.error("No contracts emitted. Check solc output.");
+  process.exit(1);
+}
 
 console.log("\nDone.");

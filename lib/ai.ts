@@ -36,6 +36,23 @@ export async function chat(params: {
   messages: { role: "system" | "user" | "assistant"; content: string }[];
   maxTokens?: number;
 }): Promise<AIResponse> {
+  const provider = getProvider();
+  const isProd = process.env.NODE_ENV === "production";
+  const hasKey =
+    provider === "glm"
+      ? Boolean(process.env.GLM_API_KEY)
+      : Boolean(process.env.OPENROUTER_API_KEY);
+
+  // Local/dev convenience: allow running the payment flow without configuring an AI key.
+  if (!hasKey && !isProd) {
+    const lastUser = [...params.messages].reverse().find((m) => m.role === "user")?.content;
+    return {
+      text:
+        "[mock-ai] Missing API key. Set OPENROUTER_API_KEY (or GLM_API_KEY).\n\n" +
+        (lastUser ? `User input:\n${lastUser}` : ""),
+    };
+  }
+
   const client = getClient();
   const model = getModel();
 

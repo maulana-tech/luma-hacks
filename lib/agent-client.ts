@@ -48,7 +48,13 @@ export async function callAgentWithPayment(params: CallAgentParams): Promise<Rec
 }
 
 async function submitUSDCPayment(
-  requirement: { tokenAddress: string; recipient: string; amount: string },
+  requirement: {
+    tokenAddress: string;
+    recipient: string;
+    amount: string;
+    paymentProcessor?: string;
+    requestId?: string;
+  },
   privateKey: string
 ): Promise<string> {
   const provider = new ethers.JsonRpcProvider(
@@ -56,11 +62,28 @@ async function submitUSDCPayment(
   );
   const wallet = new ethers.Wallet(privateKey, provider);
 
-  const USDC_ABI = [
+  const ERC20_ABI = [
     "function transfer(address to, uint256 amount) returns (bool)",
+    "function approve(address spender, uint256 amount) returns (bool)",
   ];
-  const usdc = new ethers.Contract(requirement.tokenAddress, USDC_ABI, wallet);
 
+  if (requirement.paymentProcessor) {
+    const processorAbi = [
+      "function pay(bytes32 requestId, address token, address recipient, uint256 amount)",
+    ];
+
+    const usdc = new ethers.Contract(requirement.tokenAddress, ERC20_ABI, wallet);
+    const approveTx = await usdc.approve(requirement.paymentProcessor, requirement.amount);
+    await approveTx.wait();
+
+    const processor = new ethers.Contract(requirement.paymentProcessor, processorAbi, wallet);
+    const requestId = (requirement.requestId || ethers.ZeroHash) as `0x${string}`;
+    const payTx = await processor.pay(requestId, requirement.tokenAddress, requirement.recipient, requirement.amount);
+    await payTx.wait();
+    return payTx.hash;
+  }
+
+  const usdc = new ethers.Contract(requirement.tokenAddress, ERC20_ABI, wallet);
   const tx = await usdc.transfer(requirement.recipient, requirement.amount);
   await tx.wait();
   return tx.hash;
