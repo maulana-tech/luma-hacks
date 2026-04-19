@@ -11,7 +11,7 @@ export default function Navbar() {
           <div className="w-6 h-6 bg-accent flex items-center justify-center">
             <span className="text-bg font-bold text-[10px]">A</span>
           </div>
-          <span className="text-[15px] font-semibold tracking-tight">AgentMarket</span>
+          <span className="text-[15px] font-semibold tracking-tight">Vaxa</span>
         </Link>
         <nav className="flex items-center gap-5">
           <Link href="/" className="type-caption text-text-3 hover:text-text transition-colors">
