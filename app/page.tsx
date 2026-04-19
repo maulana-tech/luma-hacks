@@ -258,7 +258,7 @@ export default function LandingPage() {
                 <span className="text-text-3">autonomous AI agents</span>
               </h2>
               <p className="text-[15px] text-text-2 leading-[1.7] mb-6 max-w-[480px]">
-                AgentMarket combines HTTP-native payments (x402), on-chain
+                Vaxa combines HTTP-native payments (x402), on-chain
                 reputation (ERC-8004), and AI agents that deliver real value —
                 all on Avalanche C-Chain.
               </p>
@@ -805,7 +805,7 @@ export default function LandingPage() {
                   <span className="text-bg font-bold text-[10px]">A</span>
                 </div>
                 <span className="text-[18px] font-semibold tracking-tight text-text">
-                  AgentMarket
+                  Avax-agents
                 </span>
               </div>
               <p className="text-[13px] text-text-3 leading-[1.6]">
@@ -870,7 +870,7 @@ export default function LandingPage() {
           </div>
           <div className="pt-6 border-t border-border text-[13px] text-text-3 flex items-center justify-between">
             <span>
-              © 2026 AgentMarket · SCBC Hackathon · Avalanche Track
+              © 2026 Vaxa · SCBC Hackathon · Avalanche Track
             </span>
             <span className="font-mono">ERC-8004 · x402 · Fuji</span>
           </div>
