@@ -1,6 +1,6 @@
 "use client";
 
-import { getDefaultConfig, RainbowKitProvider } from "@rainbow-me/rainbowkit";
+import { getDefaultConfig, RainbowKitProvider, darkTheme } from "@rainbow-me/rainbowkit";
 import { WagmiProvider } from "wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { avalancheFuji, avalanche } from "wagmi/chains";
@@ -19,7 +19,6 @@ const config = getDefaultConfig({
     [avalanche.id]: http("https://api.avax.network/ext/bc/C/rpc"),
   },
   ssr: true,
-  multiInjectedProviderDiscovery: true,
 });
 
 const queryClient = new QueryClient();
@@ -28,7 +27,15 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider>
+        <RainbowKitProvider
+          theme={darkTheme({
+            accentColor: "#b7d941",
+            accentColorForeground: "#0a0a0a",
+            borderRadius: "none",
+            fontStack: "system",
+          })}
+          modalSize="compact"
+        >
           <SidebarProvider>{children}</SidebarProvider>
         </RainbowKitProvider>
       </QueryClientProvider>
