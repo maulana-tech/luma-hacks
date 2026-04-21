@@ -317,9 +317,9 @@ export default function LandingPage() {
             "Avalanche",
             "x402 Protocol",
             "ERC-8004",
-            "DeepSeek / GLM",
+            "NVIDIA NIM",
             "USDC",
-            "Solidity",
+            "Telegram",
           ].map((name) => (
             <span
               key={name}
@@ -622,6 +622,89 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── TELEGRAM BOT ── */}
+      <section className="bg-surface-muted border-y border-border">
+        <div className="max-w-[1200px] mx-auto px-6 py-24">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            <div>
+              <SectionTag>Telegram Bot</SectionTag>
+              <h2 className="text-[clamp(28px,4vw,38px)] font-bold leading-[1.15] tracking-[-1px] text-text mb-5">
+                Use agents directly
+                <br />
+                <span className="text-text-3">in your chat</span>
+              </h2>
+              <p className="text-[15px] text-text-2 leading-[1.7] mb-6">
+                Access all 6 AI agents through Telegram. The bot pays for you —
+                just send a command. Daily spending limits keep costs under control.
+                Verify your wallet once, then use agents forever.
+              </p>
+              <div className="flex items-center gap-3 mb-8">
+                <a
+                  href="https://t.me/vaixa_bot"
+                  target="_blank"
+                  className="inline-flex items-center gap-2.5 h-11 px-6 bg-accent text-bg text-[14px] font-semibold hover:bg-accent-hover transition-colors"
+                >
+                  <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor">
+                    <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+                  </svg>
+                  Open @vaixa_bot
+                </a>
+                <Link
+                  href="/verify"
+                  className="inline-flex items-center gap-2 h-11 px-5 border border-border bg-surface/80 text-text text-[14px] font-medium hover:border-border-strong transition-colors"
+                >
+                  Verify Wallet
+                </Link>
+              </div>
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <h3 className="text-[16px] font-semibold text-text mb-2">
+                    AI Agents in Chat
+                  </h3>
+                  <p className="text-[14px] text-text-2 leading-[1.6]">
+                    /code, /summarize, /translate, /sql, /regex, /explain — all available as commands.
+                  </p>
+                </div>
+                <div>
+                  <h3 className="text-[16px] font-semibold text-text mb-2">
+                    GitHub Integration
+                  </h3>
+                  <p className="text-[14px] text-text-2 leading-[1.6]">
+                    Review PRs, create issues, browse repos — directly from Telegram. Free.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-surface border border-border p-6">
+              <div className="space-y-3">
+                {[
+                  { cmd: "/code function fib(n) { ... }", result: "Score: 85/100 — 2 issues found", time: "3s" },
+                  { cmd: "/summarize The meeting discussed...", result: "Summary: Q3 grew 15% across all metrics", time: "2s" },
+                  { cmd: "/translate Hello world | id", result: "Halo dunia", time: "2s" },
+                  { cmd: "/github repo facebook/react", result: "215k stars · 45k forks · Default: main", time: "1s" },
+                  { cmd: "/sql Get users from last month", result: "SELECT * FROM users WHERE created_at > ...", time: "3s" },
+                ].map((item, i) => (
+                  <div key={i} className="bg-bg border border-border p-3">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <code className="text-[12px] text-accent font-mono">{item.cmd}</code>
+                      <span className="text-[10px] text-text-3 font-mono">{item.time}</span>
+                    </div>
+                    <div className="text-[12px] text-text-2 pl-3 border-l-2 border-accent/30">
+                      {item.result}
+                    </div>
+                  </div>
+                ))}
+                <div className="bg-accent/5 border border-accent/20 p-3 flex items-center justify-between">
+                  <span className="text-[12px] text-accent font-medium">Bot pays for you. Daily limit: 5.00 USDC.</span>
+                  <span className="text-[11px] text-text-3 font-mono">/balance</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── INFRASTRUCTURE (DARK-ISH) ── */}
       <section id="infrastructure" className="bg-bg border-y border-border">
         <div className="max-w-[1200px] mx-auto px-6 py-24">
@@ -871,7 +954,7 @@ export default function LandingPage() {
               {
                 icon: MessageCircle,
                 title: "Telegram Bot",
-                desc: "Use agents directly in chat. Bot pays for you.",
+                desc: "Use agents in chat. Bot pays for you. GitHub integration.",
                 href: "https://t.me/vaixa_bot",
                 accent: "blue",
               },
@@ -996,9 +1079,19 @@ export default function LandingPage() {
                     "Telegram Bot",
                   ].map((l) => (
                     <li key={l}>
-                      <span className="text-[14px] text-text-3 hover:text-text cursor-pointer transition-colors">
-                        {l}
-                      </span>
+                      {l === "Telegram Bot" ? (
+                        <a href="https://t.me/vaixa_bot" target="_blank" className="text-[14px] text-text-3 hover:text-text cursor-pointer transition-colors">
+                          {l}
+                        </a>
+                      ) : l === "GitHub" ? (
+                        <a href="https://github.com/maulana-tech/scbc-hacks" target="_blank" className="text-[14px] text-text-3 hover:text-text cursor-pointer transition-colors">
+                          {l}
+                        </a>
+                      ) : (
+                        <span className="text-[14px] text-text-3 hover:text-text cursor-pointer transition-colors">
+                          {l}
+                        </span>
+                      )}
                     </li>
                   ))}
                 </ul>

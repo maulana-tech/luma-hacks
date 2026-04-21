@@ -304,31 +304,30 @@ function DashboardContent() {
   }
 
   return (
-    <div className="space-y-10">
+    <div className="max-w-[960px] mx-auto px-6 py-10 space-y-10">
       <header>
-        <h1 className="type-display text-text">
+        <h1 className="text-[28px] font-bold tracking-tight text-text">
           Hello,{" "}
-          <span className="font-editorial">
-            {ownerAddress.slice(0, 6)}…{ownerAddress.slice(-4)}
+          <span className="text-accent font-mono">
+            {ownerAddress.slice(0, 6)}...{ownerAddress.slice(-4)}
           </span>
-          .
         </h1>
-        <p className="mt-2 type-body text-text-2">
+        <p className="mt-2 text-[15px] text-text-2">
           Your PayAgent overview.
         </p>
       </header>
 
-      <div className="flex items-center gap-3 mb-2">
+      <div className="flex items-center gap-2 flex-wrap">
         {TABS.map((t) => {
           const Icon = t.icon;
           return (
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13px] font-medium transition-colors ${
+              className={`flex items-center gap-1.5 h-9 px-4 text-[13px] font-medium transition-colors ${
                 tab === t.key
                   ? "bg-accent text-bg"
-                  : "text-text-3 hover:text-text hover:bg-surface-hover"
+                  : "bg-surface border border-border text-text-3 hover:text-text hover:border-border-strong"
               }`}
             >
               <Icon size={14} strokeWidth={1.5} />
@@ -339,7 +338,7 @@ function DashboardContent() {
         <div className="flex-1" />
         <button
           onClick={togglePause}
-          className={`flex items-center gap-1.5 h-8 px-3 rounded-lg border text-[12px] font-medium transition-colors ${
+          className={`flex items-center gap-1.5 h-9 px-3 border text-[12px] font-medium transition-colors ${
             isPaused
               ? "border-amber/30 bg-amber/10 text-amber"
               : "border-border bg-surface text-text-2 hover:border-border-strong"
