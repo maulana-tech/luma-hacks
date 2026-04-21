@@ -159,12 +159,38 @@ function DashboardContent() {
   >([]);
   const [isPaused, setIsPaused] = useState(false);
   const [localTxs, setLocalTxs] = useState<LocalTransaction[]>([]);
+  const [sharedTxs, setSharedTxs] = useState<Array<{
+    id: string;
+    source: string;
+    agentName: string;
+    agentType: string;
+    amount: string;
+    txHash: string;
+    status: string;
+    createdAt: string;
+  }>>([]);
 
   const ownerAddress = address || "";
 
   useEffect(() => {
     setLocalTxs(getLocalTransactions());
   }, [tab]);
+
+  useEffect(() => {
+    if (!ownerAddress) return;
+    async function loadShared() {
+      try {
+        const res = await fetch(`/api/transactions?wallet=${ownerAddress}`);
+        if (res.ok) {
+          const data = await res.json();
+          setSharedTxs(data.transactions || []);
+        }
+      } catch {}
+    }
+    loadShared();
+    const interval = setInterval(loadShared, 15000);
+    return () => clearInterval(interval);
+  }, [ownerAddress]);
 
   useEffect(() => {
     if (!ownerAddress) return;
@@ -565,10 +591,10 @@ function DashboardContent() {
       {tab === "history" && (
         <div>
           <p className="type-caption text-text-3 mb-4">Transactions</p>
-          
+
           {localTxs.length > 0 && (
             <div className="mb-6">
-              <h4 className="text-[14px] font-semibold text-text mb-3">Agent Usage</h4>
+              <h4 className="text-[14px] font-semibold text-text mb-3">From Web</h4>
               <div className="space-y-2">
                 {localTxs.map((tx) => (
                   <div key={tx.id} className="border border-border bg-surface rounded-xl px-4 py-3 flex items-center justify-between">
@@ -603,6 +629,46 @@ function DashboardContent() {
             </div>
           )}
 
+          {sharedTxs.length > 0 && (
+            <div className="mb-6">
+              <h4 className="text-[14px] font-semibold text-text mb-3">From Telegram Bot</h4>
+              <div className="space-y-2">
+                {sharedTxs.map((tx) => (
+                  <div key={tx.id} className="border border-border bg-surface rounded-xl px-4 py-3 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className={`w-2 h-2 rounded-full ${tx.status === "success" ? "bg-accent" : "bg-red"}`} />
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[13px] font-medium text-text">{tx.agentName}</span>
+                          <span className="text-[9px] bg-accent/10 text-accent px-1.5 py-0.5 font-medium">Telegram</span>
+                        </div>
+                        <div className="text-[11px] text-text-3 font-mono mt-0.5">
+                          {new Date(tx.createdAt).toLocaleString()}
+                          {tx.txHash && (
+                            <> · <a
+                              href={`https://testnet.snowtrace.io/tx/${tx.txHash}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-accent hover:underline"
+                            >
+                              {tx.txHash.slice(0, 10)}...
+                            </a></>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="font-mono text-[13px] text-text font-medium">{tx.amount} USDC</span>
+                      <div className="text-[11px] text-text-3">
+                        {tx.status === "success" ? "Confirmed" : "Failed"}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {transactions.length > 0 && (
             <div>
               <h4 className="text-[14px] font-semibold text-text mb-3">PayAgent Transactions</h4>
@@ -610,9 +676,9 @@ function DashboardContent() {
             </div>
           )}
 
-          {localTxs.length === 0 && transactions.length === 0 && (
+          {localTxs.length === 0 && sharedTxs.length === 0 && transactions.length === 0 && (
             <div className="border border-border bg-surface rounded-xl p-10 text-center">
-              <p className="type-body-sm text-text-3">No transactions yet. Use an agent from the marketplace to get started.</p>
+              <p className="type-body-sm text-text-3">No transactions yet. Use an agent from the marketplace or Telegram bot to get started.</p>
               <Link
                 href="/marketplace"
                 className="inline-flex items-center gap-2 mt-4 text-[13px] text-accent font-medium hover:underline"
