@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useAccount } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { motion } from "framer-motion";
@@ -141,9 +141,20 @@ type Tab = "overview" | "rules" | "escrow" | "history";
 
 function DashboardContent() {
   const searchParams = useSearchParams();
-  const initialTab = (searchParams.get("tab") as Tab) || "overview";
+  const router = useRouter();
+  const pathname = usePathname();
+  const currentTab = (searchParams.get("tab") as Tab) || "overview";
   const { address, isConnected } = useAccount();
-  const [tab, setTab] = useState<Tab>(initialTab);
+  const [tab, setTab] = useState<Tab>(currentTab);
+
+  useEffect(() => {
+    setTab(currentTab);
+  }, [currentTab]);
+
+  function changeTab(newTab: Tab) {
+    setTab(newTab);
+    router.push(`${pathname}?tab=${newTab}`, { scroll: false });
+  }
   const [rules, setRules] = useState<Rule[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [transactions, setTransactions] = useState<
@@ -323,7 +334,7 @@ function DashboardContent() {
           return (
             <button
               key={t.key}
-              onClick={() => setTab(t.key)}
+              onClick={() => changeTab(t.key)}
               className={`flex items-center gap-1.5 h-9 px-4 text-[13px] font-medium transition-colors ${
                 tab === t.key
                   ? "bg-accent text-bg"
@@ -395,7 +406,7 @@ function DashboardContent() {
                 <ArrowUpRight className="h-5 w-5 shrink-0 text-text-3" />
               </Link>
               <button
-                onClick={() => setTab("escrow")}
+                onClick={() => changeTab("escrow")}
                 className="flex items-center justify-between gap-4 border-b border-border px-5 py-4 w-full text-left transition-colors hover:bg-surface-hover"
               >
                 <div className="min-w-0">
