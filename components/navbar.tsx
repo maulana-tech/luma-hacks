@@ -23,6 +23,12 @@ export default function Navbar() {
           >
             Dashboard
           </Link>
+          <Link
+            href="/verify"
+            className="type-caption text-text-3 hover:text-text transition-colors"
+          >
+            Verify
+          </Link>
           <span className="w-px h-3.5 bg-border" />
           <span className="type-caption text-text-3">Fuji</span>
           <ConnectButton.Custom>

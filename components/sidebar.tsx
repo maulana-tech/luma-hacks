@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
@@ -46,7 +47,9 @@ export default function Sidebar() {
         collapsed ? "w-16" : "w-64"
       }`}
     >
-      <SidebarContent />
+      <Suspense fallback={<div className="flex-1" />}>
+        <SidebarContent />
+      </Suspense>
     </aside>
   );
 }
