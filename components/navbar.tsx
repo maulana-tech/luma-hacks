@@ -1,15 +1,19 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import Sidebar from "@/components/sidebar";
 
 export default function Navbar() {
+  const pathname = usePathname();
+  const isLanding = pathname === "/";
+
   return (
     <header className="fixed top-0 inset-x-0 z-50 border-b border-border bg-bg/70 backdrop-blur-xl">
       <div className="max-w-[1200px] mx-auto h-14 flex items-center justify-between px-6">
         <div className="flex items-center gap-3">
-          <Sidebar />
+          {!isLanding && <Sidebar />}
           <Link href="/" className="flex items-center gap-2">
             <div className="w-6 h-6 bg-accent flex items-center justify-center">
               <span className="text-bg font-bold text-[10px]">A</span>
@@ -26,6 +30,12 @@ export default function Navbar() {
             className="type-caption text-text-3 hover:text-text transition-colors"
           >
             Dashboard
+          </Link>
+          <Link
+            href="/whitepaper"
+            className="type-caption text-text-3 hover:text-text transition-colors"
+          >
+            Whitepaper
           </Link>
           <a
             href="https://t.me/vaixa_bot"

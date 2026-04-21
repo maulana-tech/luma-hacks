@@ -224,6 +224,12 @@ export default function LandingPage() {
                 >
                   View API
                 </Link>
+                <Link
+                  href="/whitepaper"
+                  className="inline-flex items-center gap-2 h-11 px-5 border border-border bg-surface/80 text-text text-[14px] font-medium hover:border-border-strong transition-colors backdrop-blur-sm"
+                >
+                  Whitepaper
+                </Link>
                 <a
                   href="https://t.me/vaixa_bot"
                   target="_blank"
