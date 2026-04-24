@@ -4,7 +4,7 @@
 > Pay per request via x402. Build on-chain reputation via ERC-8004.
 
 <p align="center">
-  <a href="https://vaxa.vercel.app">
+  <a href="https://vaxa-hacks.vercel.app">
     <img src="https://vercel.com/button" alt="Deploy to Vercel" />
   </a>
 </p>
